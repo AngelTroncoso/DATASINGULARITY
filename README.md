@@ -1,67 +1,139 @@
-# DataSingularity Multi-Format DataHub Repository
+# 🌌 DataSingularity
+**Multi-Agent Data Intelligence Platform powered by DataHub**
 
-Este repositorio está estructurado siguiendo las **buenas prácticas para repositorios multiformato** orientados a la integración continua e ingesta de metadatos en **DataHub**.
+[![DataHub](https://img.shields.io/badge/Metadata-DataHub-orange)](https://datahubproject.io)
+[![React](https://img.shields.io/badge/Frontend-React%20%2B%20TS-blue)](https://react.dev)
+[![DataHub](https://img.shields.io/badge/Backend-Node.js%20%2B%20Firebase-yellow)](https://firebase.google.com)
 
 ---
 
-## 📁 Estructura del Repositorio
+## 🚀 Overview
 
-Para mantener un repositorio limpio y escalable, los archivos de datos se organizan exclusivamente dentro del directorio `/data/`, dejando los archivos de especificación y documentación en la raíz:
+**DataSingularity** es una plataforma de inteligencia de datos impulsada por IA que transforma múltiples fuentes de datos en un ecosistema gobernado, inteligente y manejable.
 
-```text
-/
-├── README.md               # Documentación y directivas de integración
-├── datapackage.yaml        # Especificación Frictionless Data & esquemas DataHub
-└── data/                   # Subcarpeta de datos aislada
-    ├── financial_transactions.csv  # Datos estructurados en formato CSV
-    ├── patient_genomics.json       # Stream de registros semi-estructurados JSON
-    └── saas_subscriptions.xlsx     # Hoja de cálculo multihoja Excel (.xlsx)
+**Características:**
+- 🤖 Orquestación de agentes de IA
+- 📚 Catálogo de metadatos con DataHub
+- 🔎 Descubrimiento y gobernanza de datos
+- 📊 Ingesta multi-formato (CSV, JSON, Excel)
+- 🧠 Razonamiento generativo y análisis
+
+---
+
+## 📋 Quick Start
+
+### 1. Clonar y configurar
+```bash
+git clone https://github.com/AngelTroncoso/DATASINGULARITY.git
+cd DATASINGULARITY
+cp .env.example .env
+npm install
+```
+
+### 2. Levantar DataHub (Docker)
+```bash
+docker compose up -d
+```
+✅ DataHub UI disponible en: http://localhost:9002
+- **Usuario:** datahub
+- **Contraseña:** datahub
+
+### 3. Ingestar datos al catálogo
+```bash
+npm run datahub:ingest
+```
+
+### 4. Ejecutar aplicación
+```bash
+npm run dev
+```
+✅ App disponible en: http://localhost:3000
+
+---
+
+## 🏗️ Arquitectura
+
+```
+┌─────────────────────────────────┐
+│   DataSingularity UI (React)    │
+├─────────────────────────────────┤
+│      AI Agent Orchestrator      │
+├─────────────────────────────────┤
+│ Firebase API │ DataHub GraphQL  │
+├─────────────────────────────────┤
+│   Metadata Catalog + Lineage    │
+└─────────────────────────────────┘
 ```
 
 ---
 
-## ⚠️ Restricciones y Límites de Tamaño en GitHub
+## 📦 Datos Soportados
 
-Al subir archivos de datos directamente a GitHub, debes tener en cuenta los siguientes límites oficiales de la plataforma:
-
-1. **Límite por Archivo Individual:** Cada archivo dentro de `/data/` no debe superar los **100 MB**.
-2. **Límite Total del Repositorio:** El tamaño acumulado de todo el repositorio debe ser **menor a 1 GB** (se recomienda mantenerlo por debajo de 500 MB para rendimiento óptimo en Git clone).
-3. **Manejo de Archivos Grandes (Git LFS):** Si necesitas incluir datasets que superen los 100 MB, debes activar **Git Large File Storage (Git LFS)**:
-   ```bash
-   git lfs install
-   git lfs track "data/*.csv" "data/*.xlsx" "data/*.json"
-   git add .gitattributes
-   ```
+| Formato | Ubicación | Descripción |
+|---------|-----------|------------|
+| **CSV** | `data/financial_transactions.csv` | Transacciones financieras |
+| **JSON** | `data/patient_genomics.json` | Datos genómicos (semi-estructurados) |
+| **Excel** | `data/saas_subscriptions.xlsx` | Métricas de negocio |
 
 ---
 
-## 📄 Especificación `datapackage.yaml`
+## 🔌 API Endpoints
 
-El archivo `datapackage.yaml` ubicado en la raíz actúa como el contrato de datos oficial (*Data Contract*) que DataHub interpreta para catalogar los URNs, tipos de campos, restricciones y descripciones automáticas.
-
-### Resumen del Esquema Incluido:
-
-- **`data/financial_transactions.csv`**: Esquema tabular con validación de tipos (`transaction_id`, `amount`, `status`, `risk_score`).
-- **`data/patient_genomics.json`**: Estructura de secuencias genómicas con arrays de variantes y métricas de calidad Q30.
-- **`data/saas_subscriptions.xlsx`**: Libro Excel de métricas MRR, renovaciones y contratos organizacionales.
+| Endpoint | Método | Descripción |
+|----------|--------|------------|
+| `/api/datahub/status` | GET | Verificar conexión DataHub |
+| `/api/datahub/search` | POST | Buscar assets en el catálogo |
+| `/api/datahub/ingest` | POST | Ejecutar ingesta de metadata |
 
 ---
 
-## 🚀 Cómo Conectar este Repositorio con DataHub
+## 🧬 Agentes Especializados
 
-1. **Ingesta mediante DataHub CLI / Recipe File:**
-   ```yaml
-   source:
-     type: "file"
-     config:
-       filename: "./datapackage.yaml"
-   sink:
-     type: "datahub-rest"
-     config:
-       server: "http://your-datahub-gms:8080"
-   ```
+| Agente | Responsabilidad |
+|--------|-----------------|
+| **Explorer** | Descubrimiento de datasets |
+| **Governance** | Validación de calidad de datos |
+| **Analytics** | Análisis y insights automáticos |
+| **Oracle** | Razonamiento IA y simulaciones |
 
-2. **Ingesta mediante la interfaz de DataSingularity / DataHub Proxy:**
-   - Abre la aplicación **DataSingularity**.
-   - Haz clic en **IMPORT / CONNECT** en el encabezado.
-   - Selecciona la pestaña **Data Package Repository** para inspeccionar o copiar la plantilla `datapackage.yaml` o conectarte directamente.
+---
+
+## 📚 Stack Tecnológico
+
+**Frontend:** React 18 • TypeScript • Vite • Tailwind CSS  
+**Backend:** Node.js • Firebase • Express  
+**Data:** DataHub • Neo4j • Elasticsearch  
+**IA:** LLM APIs • RAG • Multi-agent Orchestration
+
+---
+
+## 🎯 Para la Hackathon
+
+**Ventaja competitiva:** DataHub transforma DataSingularity de una app de IA a un **ecosistema gobernado de datos inteligentes**, permitiendo que los agentes razonen sobre el conocimiento empresarial.
+
+**Demo rápida (5 min):**
+1. Mostrar catálogo poblado en DataHub UI
+2. Ejecutar búsqueda desde frontend
+3. Demostrar análisis de agentes sobre datos reales
+
+---
+
+## 📖 Documentación
+
+- DataHub GraphQL API: http://localhost:8080/graphiql
+- DataHub UI: http://localhost:9002
+- API local: http://localhost:3000/api
+
+---
+
+## 👨‍💻 Autor
+
+**Ángel Troncoso**  
+AI Engineer | Data Intelligence | Generative AI  
+🇨🇱 Santiago, Chile
+
+---
+
+## 📝 Licencia
+
+MIT
