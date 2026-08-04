@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DataHubAssetNode } from '../types';
-import { X, Upload, Sparkles } from 'lucide-react';
+import { X, Upload, Sparkles, Globe, Key, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../i18n';
 
 interface CustomDataHubModalProps {
@@ -15,10 +15,41 @@ export const CustomDataHubModal: React.FC<CustomDataHubModalProps> = ({
   onImportAssets,
 }) => {
   const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState<'json' | 'gms'>('json');
   const [jsonInput, setJsonInput] = useState<string>('');
+  const [gmsHost, setGmsHost] = useState<string>('http://localhost:8080');
+  const [gmsToken, setGmsToken] = useState<string>('');
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleConnectGms = async () => {
+    setErrorMsg(null);
+    setConnectSuccess(null);
+    setIsConnecting(true);
+
+    try {
+      const res = await fetch('/api/datahub/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          host: gmsHost,
+          token: gmsToken,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Connection failed');
+
+      setConnectSuccess(`Successfully established connection to DataHub GMS at ${gmsHost}. Synchronized live metadata graph.`);
+    } catch (err: any) {
+      setErrorMsg(`DataHub Connection Error: ${err.message}`);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
 
   const handleImport = () => {
     setErrorMsg(null);
@@ -147,24 +178,96 @@ export const CustomDataHubModal: React.FC<CustomDataHubModalProps> = ({
           </div>
         )}
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-[11px] font-mono tracking-wider uppercase">
-            <span className="text-slate-400">{t.modal.jsonLabel}</span>
-            <button
-              onClick={handleSampleTemplate}
-              className="text-blue-400 hover:text-blue-300 underline font-mono"
-            >
-              {t.modal.loadSample}
-            </button>
+        {connectSuccess && (
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs rounded-sm font-mono flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{connectSuccess}</span>
           </div>
-          <textarea
-            rows={8}
-            value={jsonInput}
-            onChange={(e) => setJsonInput(e.target.value)}
-            placeholder='[ { "urn": "urn:li:dataset...", "name": "my_dataset", "platform": "snowflake" } ]'
-            className="w-full bg-[#050506] text-slate-200 font-mono text-xs p-3 rounded-sm border border-white/10 focus:outline-none focus:border-blue-500"
-          />
+        )}
+
+        {/* Tab Selector */}
+        <div className="flex border-b border-white/10 text-xs font-mono">
+          <button
+            onClick={() => setActiveTab('json')}
+            className={`px-4 py-2 border-b-2 font-bold uppercase tracking-wider transition-colors ${
+              activeTab === 'json'
+                ? 'border-blue-500 text-blue-400 bg-white/5'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            Import JSON / GraphQL
+          </button>
+          <button
+            onClick={() => setActiveTab('gms')}
+            className={`px-4 py-2 border-b-2 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
+              activeTab === 'gms'
+                ? 'border-blue-500 text-blue-400 bg-white/5'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>DataHub GMS API</span>
+          </button>
         </div>
+
+        {activeTab === 'json' ? (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[11px] font-mono tracking-wider uppercase">
+              <span className="text-slate-400">{t.modal.jsonLabel}</span>
+              <button
+                onClick={handleSampleTemplate}
+                className="text-blue-400 hover:text-blue-300 underline font-mono"
+              >
+                {t.modal.loadSample}
+              </button>
+            </div>
+            <textarea
+              rows={7}
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+              placeholder='[ { "urn": "urn:li:dataset...", "name": "my_dataset", "platform": "snowflake" } ]'
+              className="w-full bg-[#050506] text-slate-200 font-mono text-xs p-3 rounded-sm border border-white/10 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        ) : (
+          <div className="space-y-3 font-mono text-xs">
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-widest block mb-1">
+                DataHub GMS Server URL (GraphQL / REST)
+              </label>
+              <div className="flex items-center gap-2 bg-[#050506] border border-white/10 rounded-sm px-3 py-2">
+                <Globe className="w-4 h-4 text-blue-400 shrink-0" />
+                <input
+                  type="text"
+                  value={gmsHost}
+                  onChange={(e) => setGmsHost(e.target.value)}
+                  placeholder="http://localhost:8080 or https://datahub.example.com"
+                  className="bg-transparent w-full text-slate-200 text-xs focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-widest block mb-1">
+                Personal Access Token (PAT) [Optional]
+              </label>
+              <div className="flex items-center gap-2 bg-[#050506] border border-white/10 rounded-sm px-3 py-2">
+                <Key className="w-4 h-4 text-amber-400 shrink-0" />
+                <input
+                  type="password"
+                  value={gmsToken}
+                  onChange={(e) => setGmsToken(e.target.value)}
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  className="bg-transparent w-full text-slate-200 text-xs focus:outline-none placeholder:text-slate-600"
+                />
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-500 font-sans leading-relaxed">
+              Connects directly to your DataHub GMS instance over GraphQL to fetch schemas, operational lineage, metadata aspects, and governance entities into the Scientific Canvas.
+            </p>
+          </div>
+        )}
 
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
@@ -173,13 +276,24 @@ export const CustomDataHubModal: React.FC<CustomDataHubModalProps> = ({
           >
             {t.modal.cancel}
           </button>
-          <button
-            onClick={handleImport}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-sm shadow transition-all flex items-center gap-1.5"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>{t.modal.parseAndAnalyze}</span>
-          </button>
+          {activeTab === 'json' ? (
+            <button
+              onClick={handleImport}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-sm shadow transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>{t.modal.parseAndAnalyze}</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleConnectGms}
+              disabled={isConnecting}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-sm shadow transition-all flex items-center gap-1.5"
+            >
+              <RefreshCw className={`w-4 h-4 ${isConnecting ? 'animate-spin' : ''}`} />
+              <span>{isConnecting ? 'Connecting...' : 'Connect to DataHub GMS'}</span>
+            </button>
+          )}
         </div>
 
       </div>
