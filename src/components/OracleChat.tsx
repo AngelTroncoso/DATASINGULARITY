@@ -66,16 +66,20 @@ export const OracleChat: React.FC<OracleChatProps> = ({
         <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest whitespace-nowrap pl-1">
           {t.oracle.presetScenarios}
         </span>
-        {MOCK_PRESET_SCENARIOS.map((scenario) => (
-          <button
-            key={scenario.id}
-            onClick={() => handlePresetClick(scenario.prompt)}
-            disabled={isLoading}
-            className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider bg-[#050506] hover:bg-white/5 text-slate-300 border border-white/10 rounded-sm whitespace-nowrap transition-colors disabled:opacity-50"
-          >
-            {scenario.title}
-          </button>
-        ))}
+        {MOCK_PRESET_SCENARIOS.map((scenario, idx) => {
+          const presetKeys: Array<keyof typeof t.presets> = ['p1', 'p2', 'p3', 'p4', 'p5'];
+          const presetTitle = t.presets[presetKeys[idx % presetKeys.length]] || scenario.title;
+          return (
+            <button
+              key={scenario.id}
+              onClick={() => handlePresetClick(scenario.prompt)}
+              disabled={isLoading}
+              className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider bg-[#050506] hover:bg-white/5 text-slate-300 border border-white/10 rounded-sm whitespace-nowrap transition-colors disabled:opacity-50"
+            >
+              {presetTitle}
+            </button>
+          );
+        })}
       </div>
 
       {/* Chat Messages Body */}
@@ -98,7 +102,9 @@ export const OracleChat: React.FC<OracleChatProps> = ({
                   : 'bg-[#0A0A0C] text-slate-200 border-white/10'
               }`}
             >
-              <p className="whitespace-pre-wrap">{msg.text}</p>
+              <p className="whitespace-pre-wrap">
+                {msg.id === 'welcome-1' ? t.welcomeMsg : msg.text}
+              </p>
 
               {/* Structured Oracle Scientific Analysis Rendering */}
               {msg.analysis && (
