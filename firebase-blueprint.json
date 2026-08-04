@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "DataHubAsset": {
+      "title": "DataHub Asset Node",
+      "description": "Scientific metadata node in the DataSingularity network",
+      "type": "object",
+      "properties": {
+        "urn": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Unique DataHub asset URN"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Asset name"
+        },
+        "domain": {
+          "type": "string",
+          "enum": ["finance", "healthcare", "saas"],
+          "description": "Domain of the ecosystem"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["DATASET", "PIPELINE", "DATA_JOB", "CHART", "DASHBOARD", "ML_MODEL"],
+          "description": "Type of dataset or asset"
+        },
+        "platform": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Data platform"
+        },
+        "owner": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Data owner or engineer"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Description of the asset"
+        },
+        "schemaFieldsCount": {
+          "type": "integer",
+          "description": "Count of schema columns/fields"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last modification"
+        }
+      },
+      "required": ["urn", "name", "domain", "type", "platform", "owner"]
+    },
+    "SimulationMessage": {
+      "title": "Simulation Chat Message",
+      "description": "Oracle AI simulation history log",
+      "type": "object",
+      "properties": {
+        "sender": {
+          "type": "string",
+          "enum": ["user", "oracle", "system"]
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "userId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["sender", "text", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User preferences and settings",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "language": {
+          "type": "string",
+          "enum": ["en", "es", "fr", "de", "zh", "ja"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid"]
+    }
+  },
+  "firestore": {
+    "/assets/{assetId}": {
+      "schema": {
+        "$ref": "#/entities/DataHubAsset"
+      },
+      "description": "Collection of DataHub asset nodes"
+    },
+    "/simulations/{simulationId}": {
+      "schema": {
+        "$ref": "#/entities/SimulationMessage"
+      },
+      "description": "Collection of Oracle AI simulation chat messages"
+    },
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "User profile documents"
+    }
+  }
+}
