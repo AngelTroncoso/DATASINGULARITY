@@ -5,7 +5,7 @@
 
 export type EntityType = 'DATASET' | 'PIPELINE' | 'DATA_JOB' | 'CHART' | 'DASHBOARD' | 'ML_MODEL';
 
-export type PlatformType = 'snowflake' | 'bigquery' | 'postgres' | 'airflow' | 'dbt' | 'spark' | 'looker' | 'kafka';
+export type PlatformType = 'snowflake' | 'bigquery' | 'postgres' | 'airflow' | 'dbt' | 'spark' | 'looker' | 'kafka' | 'csv' | 'json' | 'xlsx' | 's3' | 'gcs';
 
 export type EcosystemDomain = 'finance' | 'healthcare' | 'saas';
 

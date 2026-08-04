@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DataHubAssetNode } from '../types';
-import { X, Upload, Sparkles, Globe, Key, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { X, Upload, Sparkles, Globe, Key, RefreshCw, CheckCircle2, FileCode, FolderArchive, Copy, Check, FileSpreadsheet, FileJson, FileText, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../i18n';
 
 interface CustomDataHubModalProps {
@@ -9,21 +9,134 @@ interface CustomDataHubModalProps {
   onImportAssets: (newAssets: DataHubAssetNode[]) => void;
 }
 
+const SAMPLE_DATAPACKAGE_YAML = `name: datasingularity-multiformat-ecosystem
+title: DataSingularity Multi-Format Data Hub Ecosystem
+description: Repository containing multi-format data resources (CSV, JSON, XLSX) structured for DataHub metadata ingestion.
+version: 1.0.0
+
+resources:
+  # 1. CSV Dataset
+  - name: financial_transactions
+    path: data/financial_transactions.csv
+    format: csv
+    schema:
+      fields:
+        - { name: transaction_id, type: string, constraints: { required: true, unique: true } }
+        - { name: amount, type: number }
+        - { name: currency, type: string }
+        - { name: status, type: string, enum: [COMPLETED, PENDING, FLAGGED] }
+        - { name: risk_score, type: number }
+
+  # 2. JSON Dataset
+  - name: patient_genomics
+    path: data/patient_genomics.json
+    format: json
+    schema:
+      fields:
+        - { name: sample_id, type: string }
+        - { name: patient_urn, type: string }
+        - { name: sequencing_date, type: date }
+        - { name: read_count, type: integer }
+        - { name: variants_detected, type: array }
+
+  # 3. Excel XLSX Dataset
+  - name: saas_subscriptions
+    path: data/saas_subscriptions.xlsx
+    format: xlsx
+    schema:
+      fields:
+        - { name: subscription_id, type: string }
+        - { name: tenant_urn, type: string }
+        - { name: mrr_amount, type: number }
+        - { name: plan_tier, type: string }`;
+
 export const CustomDataHubModal: React.FC<CustomDataHubModalProps> = ({
   isOpen,
   onClose,
   onImportAssets,
 }) => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'json' | 'gms'>('json');
+  const [activeTab, setActiveTab] = useState<'json' | 'gms' | 'package'>('package');
   const [jsonInput, setJsonInput] = useState<string>('');
   const [gmsHost, setGmsHost] = useState<string>('http://localhost:8080');
   const [gmsToken, setGmsToken] = useState<string>('');
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
+  const [copiedYaml, setCopiedYaml] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleCopyYaml = () => {
+    navigator.clipboard.writeText(SAMPLE_DATAPACKAGE_YAML);
+    setCopiedYaml(true);
+    setTimeout(() => setCopiedYaml(false), 2000);
+  };
+
+  const handleLoadMultiFormatPackage = () => {
+    const multiFormatAssets: DataHubAssetNode[] = [
+      {
+        urn: "urn:li:dataset:(urn:li:dataPlatform:csv,data.financial_transactions,PROD)",
+        name: "financial_transactions.csv",
+        domain: "finance",
+        type: "DATASET",
+        platform: "csv",
+        owner: "Finance Data Team",
+        description: "Multi-format CSV transaction ledger containing financial telemetry and risk scores.",
+        tags: ["CSV", "MultiFormat", "Financial"],
+        schemaFieldsCount: 7,
+        upstreamUrns: [],
+        downstreamUrns: [],
+        x: 100,
+        y: 200,
+        physics: { mass: 350, velocity: 12, momentum: 4200, centralityScore: 0.82, stressLevel: 15, blastRadius: 4, forceVector: { x: 1, y: 0, z: 0 } },
+        chemistry: { formula: "C_CSV_Ledger", reactivityIndex: 25, gibbsFreeEnergyDelta: -12.4, bondStrength: 85, toxicityRisk: "LOW", schemaDriftSensitivity: 0.2 },
+        math: { shannonEntropy: 2.1, clusteringCoefficient: 0.75, bayesianFailureProbability: 0.02, monteCarloSimulations: { trials: 1000, failureRatePercentage: 1.5, p95LatencyMs: 120, expectedDataLossMb: 0 } },
+        genome: { dnaSequence: "CSV-FIN-2026-STABLE", mutationRate: 0.01, isDuplicate: false, vestigialStatus: false, evolutionGeneration: 1 }
+      },
+      {
+        urn: "urn:li:dataset:(urn:li:dataPlatform:json,data.patient_genomics,PROD)",
+        name: "patient_genomics.json",
+        domain: "healthcare",
+        type: "DATASET",
+        platform: "json",
+        owner: "Bioinformatics Lab",
+        description: "Multi-format JSON document stream with genomic variants and sequencing quality Q30.",
+        tags: ["JSON", "MultiFormat", "Genomics"],
+        schemaFieldsCount: 7,
+        upstreamUrns: [],
+        downstreamUrns: [],
+        x: 350,
+        y: 200,
+        physics: { mass: 820, velocity: 5, momentum: 4100, centralityScore: 0.95, stressLevel: 8, blastRadius: 8, forceVector: { x: 0, y: 1, z: 0 } },
+        chemistry: { formula: "J_JSON_Stream", reactivityIndex: 10, gibbsFreeEnergyDelta: -45.2, bondStrength: 92, toxicityRisk: "NONE", schemaDriftSensitivity: 0.1 },
+        math: { shannonEntropy: 1.8, clusteringCoefficient: 0.90, bayesianFailureProbability: 0.01, monteCarloSimulations: { trials: 1000, failureRatePercentage: 0.5, p95LatencyMs: 80, expectedDataLossMb: 0 } },
+        genome: { dnaSequence: "JSON-GEN-2026-STABLE", mutationRate: 0.005, isDuplicate: false, vestigialStatus: false, evolutionGeneration: 2 }
+      },
+      {
+        urn: "urn:li:dataset:(urn:li:dataPlatform:xlsx,data.saas_subscriptions,PROD)",
+        name: "saas_subscriptions.xlsx",
+        domain: "saas",
+        type: "DATASET",
+        platform: "xlsx",
+        owner: "Growth Operations",
+        description: "Multi-format Excel workbook (.xlsx) containing MRR tier ledgers and tenant subscriptions.",
+        tags: ["Excel", "MultiFormat", "SaaS"],
+        schemaFieldsCount: 6,
+        upstreamUrns: [],
+        downstreamUrns: [],
+        x: 600,
+        y: 200,
+        physics: { mass: 410, velocity: 8, momentum: 3280, centralityScore: 0.68, stressLevel: 22, blastRadius: 2, forceVector: { x: -1, y: 0, z: 0 } },
+        chemistry: { formula: "X_XLSX_Workbook", reactivityIndex: 35, gibbsFreeEnergyDelta: -8.1, bondStrength: 70, toxicityRisk: "MEDIUM", schemaDriftSensitivity: 0.3 },
+        math: { shannonEntropy: 2.5, clusteringCoefficient: 0.60, bayesianFailureProbability: 0.04, monteCarloSimulations: { trials: 1000, failureRatePercentage: 3.2, p95LatencyMs: 210, expectedDataLossMb: 0 } },
+        genome: { dnaSequence: "XLSX-SAAS-2026-STABLE", mutationRate: 0.02, isDuplicate: false, vestigialStatus: false, evolutionGeneration: 1 }
+      }
+    ];
+
+    onImportAssets(multiFormatAssets);
+    onClose();
+  };
 
   const handleConnectGms = async () => {
     setErrorMsg(null);
@@ -186,10 +299,21 @@ export const CustomDataHubModal: React.FC<CustomDataHubModalProps> = ({
         )}
 
         {/* Tab Selector */}
-        <div className="flex border-b border-white/10 text-xs font-mono">
+        <div className="flex border-b border-white/10 text-xs font-mono overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('package')}
+            className={`px-4 py-2 border-b-2 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'package'
+                ? 'border-blue-500 text-blue-400 bg-white/5'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <FolderArchive className="w-3.5 h-3.5" />
+            <span>datapackage.yaml (Multi-format)</span>
+          </button>
           <button
             onClick={() => setActiveTab('json')}
-            className={`px-4 py-2 border-b-2 font-bold uppercase tracking-wider transition-colors ${
+            className={`px-4 py-2 border-b-2 font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
               activeTab === 'json'
                 ? 'border-blue-500 text-blue-400 bg-white/5'
                 : 'border-transparent text-slate-500 hover:text-slate-300'
@@ -199,7 +323,7 @@ export const CustomDataHubModal: React.FC<CustomDataHubModalProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('gms')}
-            className={`px-4 py-2 border-b-2 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2 border-b-2 font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'gms'
                 ? 'border-blue-500 text-blue-400 bg-white/5'
                 : 'border-transparent text-slate-500 hover:text-slate-300'
@@ -210,7 +334,54 @@ export const CustomDataHubModal: React.FC<CustomDataHubModalProps> = ({
           </button>
         </div>
 
-        {activeTab === 'json' ? (
+        {activeTab === 'package' ? (
+          <div className="space-y-3 font-mono text-xs">
+            {/* Folder Layout & GitHub Limits Banner */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px]">
+              <div className="p-2.5 bg-[#050506] border border-white/10 rounded-sm space-y-1">
+                <div className="text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <FolderArchive className="w-3.5 h-3.5" />
+                  <span>Estructura /data</span>
+                </div>
+                <div className="text-slate-300 font-mono text-[9px] leading-relaxed">
+                  <p>📁 /data/financial_transactions.csv</p>
+                  <p>📁 /data/patient_genomics.json</p>
+                  <p>📁 /data/saas_subscriptions.xlsx</p>
+                  <p className="text-slate-500 mt-1">✓ Raíz limpia: solo README.md y datapackage.yaml</p>
+                </div>
+              </div>
+
+              <div className="p-2.5 bg-[#050506] border border-amber-500/20 rounded-sm space-y-1">
+                <div className="text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Límites de GitHub</span>
+                </div>
+                <div className="text-slate-300 font-mono text-[9px] leading-relaxed">
+                  <p>• Archivos individuales: &lt; 100 MB</p>
+                  <p>• Repositorio completo: &lt; 1 GB</p>
+                  <p className="text-amber-300/80 mt-1">💡 Git LFS habilitado si excede 100MB</p>
+                </div>
+              </div>
+            </div>
+
+            {/* YAML Preview & Copy */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 uppercase tracking-wider">Plantilla datapackage.yaml (Multiformato):</span>
+                <button
+                  onClick={handleCopyYaml}
+                  className="px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-sm text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
+                >
+                  {copiedYaml ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedYaml ? '¡Copiado!' : 'Copiar YAML'}</span>
+                </button>
+              </div>
+              <pre className="bg-[#050506] p-3 rounded-sm border border-white/10 text-[10px] text-cyan-300 max-h-48 overflow-y-auto leading-relaxed select-all">
+                {SAMPLE_DATAPACKAGE_YAML}
+              </pre>
+            </div>
+          </div>
+        ) : activeTab === 'json' ? (
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[11px] font-mono tracking-wider uppercase">
               <span className="text-slate-400">{t.modal.jsonLabel}</span>
@@ -276,7 +447,15 @@ export const CustomDataHubModal: React.FC<CustomDataHubModalProps> = ({
           >
             {t.modal.cancel}
           </button>
-          {activeTab === 'json' ? (
+          {activeTab === 'package' ? (
+            <button
+              onClick={handleLoadMultiFormatPackage}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-sm shadow transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Simular Ingesta Multiformato</span>
+            </button>
+          ) : activeTab === 'json' ? (
             <button
               onClick={handleImport}
               className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-sm shadow transition-all flex items-center gap-1.5"
