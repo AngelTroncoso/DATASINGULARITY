@@ -23,12 +23,67 @@ async function startServer() {
     },
   });
 
+  // Helper: Universal AI Dispatcher supporting Gemini and Groq APIs
+  async function generateAIContent(
+    userPrompt: string,
+    systemInstruction: string,
+    responseSchema?: any
+  ): Promise<any> {
+    const provider = process.env.AI_PROVIDER || (process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY ? 'groq' : 'gemini');
+
+    // 1. Groq API Branch
+    if (provider === 'groq' && process.env.GROQ_API_KEY) {
+      const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: `${systemInstruction}\nOutput strictly valid JSON matching this schema description:\n${JSON.stringify(responseSchema)}` },
+            { role: 'user', content: userPrompt },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.2,
+        }),
+      });
+
+      if (!groqResponse.ok) {
+        const errText = await groqResponse.text();
+        throw new Error(`Groq API Error (${groqResponse.status}): ${errText}`);
+      }
+
+      const groqData = await groqResponse.json();
+      const contentText = groqData.choices?.[0]?.message?.content || '{}';
+      return JSON.parse(contentText);
+    }
+
+    // 2. Default Gemini API Branch
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: userPrompt,
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema: responseSchema ? {
+          type: Type.OBJECT,
+          properties: responseSchema.properties,
+          required: responseSchema.required,
+        } : undefined,
+      },
+    });
+
+    return JSON.parse(response.text || '{}');
+  }
+
   // --- API Endpoint: Oracle Scientific AI Analysis ---
   app.post('/api/oracle/analyze', async (req, res) => {
     try {
       const { prompt, assets, activeDomain, selectedAgentId, timelineOffset } = req.body;
 
-      if (!process.env.GEMINI_API_KEY) {
+      if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
         return res.status(200).json({
           summary: '⚡ DATA SINGULARITY Scientific Engine Operating in Standalone Heuristic Mode.',
           scientificHypothesis: 'Hypothesis H₁: Metadata stress and entropy propagation follow second-order linear differential state equations.',
@@ -103,66 +158,55 @@ DataHub Assets Context JSON:
 ${JSON.stringify(assets ? assets.slice(0, 10) : [], null, 2)}
 `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: userMessage,
-        config: {
-          systemInstruction,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              summary: { type: Type.STRING },
-              scientificHypothesis: { type: Type.STRING },
-              mathematicalProof: { type: Type.STRING },
-              agentDiagnostics: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    agentId: { type: Type.STRING },
-                    agentName: { type: Type.STRING },
-                    finding: { type: Type.STRING },
-                    severity: { type: Type.STRING },
-                    metricValue: { type: Type.STRING },
-                  },
-                  required: ['agentId', 'agentName', 'finding', 'severity', 'metricValue'],
-                },
+      const result = await generateAIContent(userMessage, systemInstruction, {
+        properties: {
+          summary: { type: Type.STRING },
+          scientificHypothesis: { type: Type.STRING },
+          mathematicalProof: { type: Type.STRING },
+          agentDiagnostics: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                agentId: { type: Type.STRING },
+                agentName: { type: Type.STRING },
+                finding: { type: Type.STRING },
+                severity: { type: Type.STRING },
+                metricValue: { type: Type.STRING },
               },
-              affectedUrns: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-              },
-              recommendedFixes: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    actionType: { type: Type.STRING },
-                    targetUrn: { type: Type.STRING },
-                  },
-                  required: ['title', 'description', 'actionType', 'targetUrn'],
-                },
-              },
-              confidenceScore: { type: Type.NUMBER },
+              required: ['agentId', 'agentName', 'finding', 'severity', 'metricValue'],
             },
-            required: [
-              'summary',
-              'scientificHypothesis',
-              'mathematicalProof',
-              'agentDiagnostics',
-              'affectedUrns',
-              'recommendedFixes',
-              'confidenceScore',
-            ],
           },
+          affectedUrns: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
+          recommendedFixes: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                description: { type: Type.STRING },
+                actionType: { type: Type.STRING },
+                targetUrn: { type: Type.STRING },
+              },
+              required: ['title', 'description', 'actionType', 'targetUrn'],
+            },
+          },
+          confidenceScore: { type: Type.NUMBER },
         },
+        required: [
+          'summary',
+          'scientificHypothesis',
+          'mathematicalProof',
+          'agentDiagnostics',
+          'affectedUrns',
+          'recommendedFixes',
+          'confidenceScore',
+        ],
       });
 
-      const jsonText = response.text || '{}';
-      const result = JSON.parse(jsonText);
       return res.json(result);
     } catch (error: any) {
       console.error('Error in /api/oracle/analyze:', error);
@@ -178,7 +222,7 @@ ${JSON.stringify(assets ? assets.slice(0, 10) : [], null, 2)}
     try {
       const { targetUrn, assetName, platform } = req.body;
 
-      if (!process.env.GEMINI_API_KEY) {
+      if (!process.env.GEMINI_API_KEY && !process.env.GROQ_API_KEY) {
         return res.json({
           generatedDescription: `🧪 [DATA SINGULARITY Shield Active] Automated documentation generated for ${assetName}. Gold-layer asset verified with low entropy (H < 1.0). SOX & PII compliance policies enforced.`,
           addedTags: ['DATA_SINGULARITY_SHIELDED', 'GOVERNED_ASSET', 'SLA_PROTECTED'],
@@ -186,28 +230,22 @@ ${JSON.stringify(assets ? assets.slice(0, 10) : [], null, 2)}
         });
       }
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: `Generate automated DataHub metadata documentation, tags, and SLA contract for DataHub asset URN: ${targetUrn} (Name: ${assetName}, Platform: ${platform}).`,
-        config: {
-          systemInstruction: 'You are Guardian Agent in DATA SINGULARITY. Generate scientific, compliance-ready DataHub metadata documentation.',
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              generatedDescription: { type: Type.STRING },
-              addedTags: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-              },
-              slaContract: { type: Type.STRING },
+      const result = await generateAIContent(
+        `Generate automated DataHub metadata documentation, tags, and SLA contract for DataHub asset URN: ${targetUrn} (Name: ${assetName}, Platform: ${platform}).`,
+        'You are Guardian Agent in DATA SINGULARITY. Generate scientific, compliance-ready DataHub metadata documentation.',
+        {
+          properties: {
+            generatedDescription: { type: Type.STRING },
+            addedTags: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
             },
-            required: ['generatedDescription', 'addedTags', 'slaContract'],
+            slaContract: { type: Type.STRING },
           },
-        },
-      });
+          required: ['generatedDescription', 'addedTags', 'slaContract'],
+        }
+      );
 
-      const result = JSON.parse(response.text || '{}');
       return res.json(result);
     } catch (error: any) {
       return res.status(500).json({ error: error?.message || 'Governance generation failed' });
