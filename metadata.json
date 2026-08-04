@@ -1,0 +1,6 @@
+{
+  "name": "DATA SINGULARITY",
+  "description": "DataHub organizational intelligence engine modeling metadata through physics, chemistry, mathematics, and digital genome simulations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

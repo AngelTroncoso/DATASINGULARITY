@@ -1,0 +1,29 @@
+[
+  {
+    "sample_id": "GEN_SAM_9012",
+    "patient_urn": "urn:li:patient:PAT_8801",
+    "sequencing_date": "2026-07-15",
+    "read_count": 45000000,
+    "quality_score_q30": 98.4,
+    "variants_detected": ["BRCA1_m1", "TP53_v4"],
+    "entropy_level": 0.04
+  },
+  {
+    "sample_id": "GEN_SAM_9013",
+    "patient_urn": "urn:li:patient:PAT_8802",
+    "sequencing_date": "2026-07-16",
+    "read_count": 52000000,
+    "quality_score_q30": 99.1,
+    "variants_detected": ["EGFR_L858R"],
+    "entropy_level": 0.02
+  },
+  {
+    "sample_id": "GEN_SAM_9014",
+    "patient_urn": "urn:li:patient:PAT_8803",
+    "sequencing_date": "2026-07-18",
+    "read_count": 38000000,
+    "quality_score_q30": 96.8,
+    "variants_detected": ["KRAS_G12D", "PIK3CA_E545K"],
+    "entropy_level": 0.12
+  }
+]

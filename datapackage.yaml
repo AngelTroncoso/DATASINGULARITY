@@ -1,0 +1,108 @@
+name: datasingularity-multiformat-ecosystem
+title: DataSingularity Multi-Format Data Hub Ecosystem
+description: Repository containing multi-format data resources (CSV, JSON, XLSX) structured for DataHub metadata ingestion and schema auto-detection.
+version: 1.0.0
+homepage: https://github.com/org/datasingularity-multiformat
+licenses:
+  - name: MIT
+    path: https://opensource.org/licenses/MIT
+
+resources:
+  # 1. Financial Transactions Resource (CSV Format)
+  - name: financial_transactions
+    title: Financial Transactions Ledger
+    description: High-frequency transaction logs containing currency metrics, risk scores, and status flags.
+    path: data/financial_transactions.csv
+    format: csv
+    mediatype: text/csv
+    encoding: utf-8
+    schema:
+      fields:
+        - name: transaction_id
+          type: string
+          description: Unique transaction identifier (URN candidate)
+          constraints:
+            required: true
+            unique: true
+        - name: account_id
+          type: string
+          description: Reference account number
+        - name: timestamp
+          type: datetime
+          format: ISO8601
+          description: Execution timestamp in UTC ISO format
+        - name: amount
+          type: number
+          description: Monetary value of transaction
+        - name: currency
+          type: string
+          description: ISO 4217 3-letter currency code
+        - name: status
+          type: string
+          enum: [COMPLETED, PENDING, FLAGGED, REJECTED]
+          description: Transaction state
+        - name: risk_score
+          type: number
+          description: ML-calculated risk probability (0.0 to 1.0)
+
+  # 2. Patient Genomics Resource (JSON Format)
+  - name: patient_genomics
+    title: Patient Genomics Sequencing Stream
+    description: Next-generation sequencing quality metrics and detected genetic variants.
+    path: data/patient_genomics.json
+    format: json
+    mediatype: application/json
+    encoding: utf-8
+    schema:
+      fields:
+        - name: sample_id
+          type: string
+          description: Unique genomic sample identifier
+          constraints:
+            required: true
+        - name: patient_urn
+          type: string
+          description: Foreign URN link to Patient Registry entity
+        - name: sequencing_date
+          type: date
+          format: YYYY-MM-DD
+        - name: read_count
+          type: integer
+          description: Total sequencing reads count
+        - name: quality_score_q30
+          type: number
+          description: Percentage of bases with Q30+ quality
+        - name: variants_detected
+          type: array
+          description: List of detected genetic variants
+        - name: entropy_level
+          type: number
+          description: Scientific decay entropy coefficient
+
+  # 3. SaaS Subscriptions Resource (Excel XLSX Format)
+  - name: saas_subscriptions
+    title: SaaS Monthly Recurring Revenue Ledger
+    description: Multi-sheet Excel workbook tracking active organization subscriptions, churn, and ARR metrics.
+    path: data/saas_subscriptions.xlsx
+    format: xlsx
+    mediatype: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+    schema:
+      fields:
+        - name: subscription_id
+          type: string
+          description: Primary subscription key
+        - name: tenant_urn
+          type: string
+          description: Reference URN for SaaS tenant
+        - name: plan_tier
+          type: string
+          enum: [ENTERPRISE, PROFESSIONAL, STARTER]
+        - name: mrr_amount
+          type: number
+          description: Monthly Recurring Revenue in USD
+        - name: renewal_date
+          type: date
+          format: YYYY-MM-DD
+        - name: active_users_count
+          type: integer
+          description: Active seat count
